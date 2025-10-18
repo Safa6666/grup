@@ -84,13 +84,15 @@ $(document).ready(function() {
 function initAppsPage() {
     console.log("تهيئة صفحة التطبيقات...");
     
-    // التأكد من تحميل البيانات الأساسية أولاً
-    setTimeout(() => {
-        // إضافة حدث للتحديدات
+    // تحميل أي بيانات مخزنة محلياً أولاً
+    loadStoredApps();
+    
+    // إضافة حدث للتحديدات بعد تحميل البيانات
+    setTimeout(function() {
         $('.show-details').off('change').on('change', function() {
-            const appIndex = $(this).data('app');
+            const appIndex = parseInt($(this).data('app'));
             const row = $(this).closest('tr');
-            const detailsId = 'app-details-' + appIndex;
+            console.log("تم النقر على تطبيق رقم:", appIndex);
             
             if (this.checked) {
                 // إخفاء جميع التفاصيل الأخرى أولاً
@@ -99,23 +101,15 @@ function initAppsPage() {
                 showAppDetails(appIndex, row);
             } else {
                 // إخفاء التفاصيل
-                $('#' + detailsId).remove();
+                $('#app-details-' + appIndex).remove();
             }
         });
         
-        // أزرار التحكم - تأكد من وجودها في الـ DOM
-        if ($('#showAllDetails').length > 0) {
-            $('#showAllDetails').off('click').on('click', showAllDetails);
-        }
+        // أزرار التحكم
+        $('#showAllDetails').off('click').on('click', showAllDetails);
+        $('#hideAllDetails').off('click').on('click', hideAllDetails);
         
-        if ($('#hideAllDetails').length > 0) {
-            $('#hideAllDetails').off('click').on('click', hideAllDetails);
-        }
-        
-        // تحميل أي بيانات مخزنة محلياً
-        loadStoredApps();
-        
-        console.log("تم تهيئة أزرار التحكم بنجاح");
+        console.log("تم تهيئة جميع الأزرار بنجاح");
     }, 100);
 }
 
@@ -163,13 +157,19 @@ function initNavigationEffects() {
 
 // إظهار تفاصيل التطبيق
 function showAppDetails(appIndex, row) {
+    console.log("محاولة إظهار تفاصيل التطبيق رقم:", appIndex);
+    console.log("عدد التطبيقات في appsData:", appsData.length);
+    
     if (appIndex < 0 || appIndex >= appsData.length) {
-        console.error('رقم التطبيق غير صحيح:', appIndex);
+        console.error('رقم التطبيق غير صحيح:', appIndex, 'عدد التطبيقات:', appsData.length);
+        showError('تعذر العثور على تفاصيل التطبيق');
         return;
     }
     
     const app = appsData[appIndex];
     const detailsId = 'app-details-' + appIndex;
+    
+    console.log("عرض تفاصيل التطبيق:", app.name);
     
     const detailsHTML = `
         <tr id="${detailsId}" class="app-details-row">
@@ -180,6 +180,18 @@ function showAppDetails(appIndex, row) {
                         <div class="detail-item">
                             <strong>🌐 الموقع الإلكتروني:</strong>
                             <a href="${app.website}" target="_blank" style="color: #ffeaa7;">${app.website}</a>
+                        </div>
+                        <div class="detail-item">
+                            <strong>🏢 الشركة المطورة:</strong>
+                            <p>${app.company}</p>
+                        </div>
+                        <div class="detail-item">
+                            <strong>📊 مجال الاستخدام:</strong>
+                            <p>${app.category}</p>
+                        </div>
+                        <div class="detail-item">
+                            <strong>💰 التسعير:</strong>
+                            <p>${app.pricing}</p>
                         </div>
                         <div class="detail-item">
                             <strong>📝 الشرح المختصر:</strong>
@@ -199,17 +211,24 @@ function showAppDetails(appIndex, row) {
         </tr>
     `;
     
+    // إزالة أي تفاصيل سابقة لنفس التطبيق
+    $('#' + detailsId).remove();
+    
+    // إضافة التفاصيل الجديدة
     $(detailsHTML).insertAfter(row);
     
     // إضافة تأثير الظهور
     $('#' + detailsId).hide().fadeIn(500);
+    
+    console.log("تم عرض التفاصيل بنجاح");
 }
 
 // إظهار كل التفاصيل
 function showAllDetails() {
+    console.log("إظهار كل التفاصيل...");
     $('.app-details-row').remove();
     $('.show-details').each(function() {
-        const appIndex = $(this).data('app');
+        const appIndex = parseInt($(this).data('app'));
         const row = $(this).closest('tr');
         $(this).prop('checked', true);
         showAppDetails(appIndex, row);
@@ -218,6 +237,7 @@ function showAllDetails() {
 
 // إخفاء كل التفاصيل
 function hideAllDetails() {
+    console.log("إخفاء كل التفاصيل...");
     $('.app-details-row').remove();
     $('.show-details').prop('checked', false);
 }
@@ -454,11 +474,12 @@ function loadStoredApps() {
 // عرض التطبيقات المخزنة
 function displayStoredApps(storedApps) {
     const container = $('#dynamicAppsContainer');
-    let html = '';
     
     storedApps.forEach((app, index) => {
         const appNumber = appsData.length + index;
-        html += `
+        
+        // إنشاء صف جديد للجدول
+        const newRow = `
             <tr>
                 <td>${app.name}</td>
                 <td>${app.company}</td>
@@ -467,6 +488,9 @@ function displayStoredApps(storedApps) {
                 <td><input type="checkbox" class="show-details" data-app="${appNumber}"></td>
             </tr>
         `;
+        
+        // إضافة الصف إلى الجدول
+        $('#appsTable tbody').append(newRow);
         
         // إضافة إلى appsData للعرض
         appsData.push({
@@ -482,21 +506,18 @@ function displayStoredApps(storedApps) {
         });
     });
     
-    if (html) {
-        $(html).appendTo('#appsTable tbody');
-        // إعادة ربط الأحداث للتطبيقات الجديدة
-        $('.show-details').off('change').on('change', function() {
-            const appIndex = $(this).data('app');
-            const row = $(this).closest('tr');
-            
-            if (this.checked) {
-                $('.app-details-row').remove();
-                showAppDetails(appIndex, row);
-            } else {
-                $('#app-details-' + appIndex).remove();
-            }
-        });
-    }
+    // إعادة ربط الأحداث للتطبيقات الجديدة
+    $('.show-details').off('change').on('change', function() {
+        const appIndex = parseInt($(this).data('app'));
+        const row = $(this).closest('tr');
+        
+        if (this.checked) {
+            $('.app-details-row').remove();
+            showAppDetails(appIndex, row);
+        } else {
+            $('#app-details-' + appIndex).remove();
+        }
+    });
 }
 
 // عرض رسالة الخطأ
