@@ -1,5 +1,3 @@
-
-
 // بيانات التطبيقات المخزنة
 const appsData = [
     {
@@ -86,29 +84,39 @@ $(document).ready(function() {
 function initAppsPage() {
     console.log("تهيئة صفحة التطبيقات...");
     
-    // إضافة حدث للتحديدات
-    $('.show-details').off('change').on('change', function() {
-        const appIndex = $(this).data('app');
-        const row = $(this).closest('tr');
-        const detailsId = 'app-details-' + appIndex;
+    // التأكد من تحميل البيانات الأساسية أولاً
+    setTimeout(() => {
+        // إضافة حدث للتحديدات
+        $('.show-details').off('change').on('change', function() {
+            const appIndex = $(this).data('app');
+            const row = $(this).closest('tr');
+            const detailsId = 'app-details-' + appIndex;
+            
+            if (this.checked) {
+                // إخفاء جميع التفاصيل الأخرى أولاً
+                $('.app-details-row').remove();
+                // إظهار التفاصيل المطلوبة
+                showAppDetails(appIndex, row);
+            } else {
+                // إخفاء التفاصيل
+                $('#' + detailsId).remove();
+            }
+        });
         
-        if (this.checked) {
-            // إخفاء جميع التفاصيل الأخرى أولاً
-            $('.app-details-row').remove();
-            // إظهار التفاصيل المطلوبة
-            showAppDetails(appIndex, row);
-        } else {
-            // إخفاء التفاصيل
-            $('#' + detailsId).remove();
+        // أزرار التحكم - تأكد من وجودها في الـ DOM
+        if ($('#showAllDetails').length > 0) {
+            $('#showAllDetails').off('click').on('click', showAllDetails);
         }
-    });
-    
-    // أزرار التحكم
-    $('#showAllDetails').on('click', showAllDetails);
-    $('#hideAllDetails').on('click', hideAllDetails);
-    
-    // تحميل أي بيانات مخزنة محلياً
-    loadStoredApps();
+        
+        if ($('#hideAllDetails').length > 0) {
+            $('#hideAllDetails').off('click').on('click', hideAllDetails);
+        }
+        
+        // تحميل أي بيانات مخزنة محلياً
+        loadStoredApps();
+        
+        console.log("تم تهيئة أزرار التحكم بنجاح");
+    }, 100);
 }
 
 // تهيئة صفحة إضافة التطبيق
